@@ -79,30 +79,72 @@ onload = function(){
     m.perspective(90, c.width / c.height, 0.1, 100, pMatrix);
     m.multiply(pMatrix, vMatrix, tmpMatrix);
     
-    // 一つ目のモデルを移動するためのモデル座標変換行列
-    m.translate(mMatrix, [1.5, 0.0, 0.0], mMatrix);
+    // カウンタの宣言
+    var count = 0;
 
-    // モデル x ビュー x プロジェクション（一つ目のモデル）
-    m.multiply(tmpMatrix, mMatrix, mvpMatrix);
-
-    // uniformLocationへ座標変換行列を登録し描画する（一つ目のモデル）
-    gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-
-    // 二つ目のモデルを移動するためのモデル座標変換行列
+ // 恒常ループ
+(function(){
+    // canvasを初期化
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearDepth(1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    
+    // カウンタをインクリメントする
+    count++;
+    
+    // カウンタを元にラジアンを算出
+    var rad = (count % 360) * Math.PI / 180;
+    
+    // モデル1は円の軌道を描き移動する
+    var x = Math.cos(rad);
+    var y = Math.sin(rad);
     m.identity(mMatrix);
-    m.translate(mMatrix, [-1.5, 0.0, 0.0], mMatrix);
+    m.translate(mMatrix, [x, y + 1.0, 0.0], mMatrix);
+    
+    // // モデル1の座標変換行列を完成させレンダリングする
+    // m.multiply(tmpMatrix, mMatrix, mvpMatrix);
+    // gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
+    // gl.drawArrays(gl.TRIANGLES, 0, 3);
+    DrawTriangle();
 
-    // モデル x ビュー x プロジェクション（二つ目のモデル）
-    m.multiply(tmpMatrix, mMatrix, mvpMatrix);
-
-    // uniformLocationへ座標変換行列を登録し描画する（二つ目のモデル）
-    gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    // モデル2はY軸を中心に回転する
+    m.identity(mMatrix);
+    m.translate(mMatrix, [1.0, -1.0, 0.0], mMatrix);
+    m.rotate(mMatrix, rad, [0, 1, 0], mMatrix);
+    
+    // // モデル2の座標変換行列を完成させレンダリングする
+    // m.multiply(tmpMatrix, mMatrix, mvpMatrix);
+    // gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
+    // gl.drawArrays(gl.TRIANGLES, 0, 3);
+    DrawTriangle();
+    
+    // モデル3は拡大縮小する
+    var s = Math.sin(rad) + 1.0;
+    m.identity(mMatrix);
+    m.translate(mMatrix, [-1.0, -1.0, 0.0], mMatrix);
+    m.scale(mMatrix, [s, s, 0.0], mMatrix)
+    
+    // // モデル3の座標変換行列を完成させレンダリングする
+    // m.multiply(tmpMatrix, mMatrix, mvpMatrix);
+    // gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
+    // gl.drawArrays(gl.TRIANGLES, 0, 3);
+    DrawTriangle();
     
     // コンテキストの再描画
     gl.flush();
     
+    // ループのために再帰呼び出し
+    setTimeout(arguments.callee, 1000 / 30);
+})();
+
+function DrawTriangle()
+{
+    m.multiply(tmpMatrix, mMatrix, mvpMatrix);
+    gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+}
+
     // シェーダを生成する関数
     function create_shader(id){
         // シェーダを格納する変数
