@@ -37,20 +37,30 @@ onload = function(){
     // X, Y, Z
     // X, Y, Z
     // X, Y, Z
+    // X, Y, Z
     var position = [
          0.0, 1.0, 0.0,
          1.0, 0.0, 0.0,
-        -1.0, 0.0, 0.0
+        -1.0, 0.0, 0.0,
+         0.0, -1.0, 0.0
     ];
     
     // モデル(頂点)データ
     // R, G, B, A
     // R, G, B, A
     // R, G, B, A
+    // R, G, B, A
     var color = [
          1.0, 0.0, 0.0, 1.0,
          0.0, 1.0, 0.0, 1.0,
-         0.0, 0.0, 1.0, 1.0
+         0.0, 0.0, 1.0, 1.0,
+         1.0, 1.0, 1.0, 1.0
+    ];
+
+    // 頂点インデックスを格納する配列
+    var index = [
+        0, 1, 2,
+        1, 2, 3
     ];
     
     // VBOの生成
@@ -59,6 +69,11 @@ onload = function(){
     
     // VBOを登録する
     set_attribute([pos_vbo, col_vbo], attLocation, attStride);
+
+    // IBOの生成
+    var ibo = create_ibo(index);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
 
     // uniformLocationの取得
     var uniLocation = gl.getUniformLocation(prg, 'mvpMatrix');
@@ -95,39 +110,9 @@ onload = function(){
     // カウンタを元にラジアンを算出
     var rad = (count % 360) * Math.PI / 180;
     
-    // モデル1は円の軌道を描き移動する
-    var x = Math.cos(rad);
-    var y = Math.sin(rad);
-    m.identity(mMatrix);
-    m.translate(mMatrix, [x, y + 1.0, 0.0], mMatrix);
-    
-    // // モデル1の座標変換行列を完成させレンダリングする
-    // m.multiply(tmpMatrix, mMatrix, mvpMatrix);
-    // gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
-    // gl.drawArrays(gl.TRIANGLES, 0, 3);
-    DrawTriangle();
-
     // モデル2はY軸を中心に回転する
     m.identity(mMatrix);
-    m.translate(mMatrix, [1.0, -1.0, 0.0], mMatrix);
     m.rotate(mMatrix, rad, [0, 1, 0], mMatrix);
-    
-    // // モデル2の座標変換行列を完成させレンダリングする
-    // m.multiply(tmpMatrix, mMatrix, mvpMatrix);
-    // gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
-    // gl.drawArrays(gl.TRIANGLES, 0, 3);
-    DrawTriangle();
-    
-    // モデル3は拡大縮小する
-    var s = Math.sin(rad) + 1.0;
-    m.identity(mMatrix);
-    m.translate(mMatrix, [-1.0, -1.0, 0.0], mMatrix);
-    m.scale(mMatrix, [s, s, 0.0], mMatrix)
-    
-    // // モデル3の座標変換行列を完成させレンダリングする
-    // m.multiply(tmpMatrix, mMatrix, mvpMatrix);
-    // gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
-    // gl.drawArrays(gl.TRIANGLES, 0, 3);
     DrawTriangle();
     
     // コンテキストの再描画
@@ -141,8 +126,7 @@ function DrawTriangle()
 {
     m.multiply(tmpMatrix, mMatrix, mvpMatrix);
     gl.uniformMatrix4fv(uniLocation, false, mvpMatrix);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-
+    gl.drawElements(gl.TRIANGLES, index.length, gl.UNSIGNED_SHORT, 0);
 }
 
     // シェーダを生成する関数
@@ -253,5 +237,24 @@ function DrawTriangle()
             // attributeLocationを通知し登録する
             gl.vertexAttribPointer(attL[i], attS[i], gl.FLOAT, false, 0, 0);
         } 
+    }
+
+    // IBOを生成する関数
+    function create_ibo(data)
+    {
+        // バッファオブジェクトの生成
+        var ibo = gl.createBuffer();
+
+        // バッファをバインドする
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+
+        // バッファにデータをセット
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Int16Array(data), gl.STATIC_DRAW);
+
+        // バッファのバインドを無効化
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+        // 生成したIBOを返して終了
+        return ibo;
     }
 };
